@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}New Reservation — Meeting Room Booking{% endblock %}
+{% block content %}
+<h2>New Reservation</h2>
+<div class="card">
+    <form hx-post="/reservations"
+          hx-target="#form-error"
+          hx-swap="innerHTML">
+        <label>Room
+            <select name="room_id" required>
+                {% for room in rooms %}
+                <option value="{{ room.room_id }}">{{ room.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Date
+            <input type="date" name="res_date" required>
+        </label>
+        <label>Start time
+            <input type="time" name="start_time" required>
+        </label>
+        <label>End time
+            <input type="time" name="end_time" required>
+        </label>
+        <label>Responsible
+            <input type="text" name="responsible" maxlength="150"
+                   placeholder="Name of the person responsible" required>
+        </label>
+        <label>Notes
+            <textarea name="notes" rows="3" placeholder="Optional notes"></textarea>
+        </label>
+        <button type="submit">Create reservation</button>
+        <div id="form-error"></div>
+    </form>
+</div>
+{% endblock %}

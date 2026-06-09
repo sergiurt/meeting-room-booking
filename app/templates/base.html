@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Meeting Room Booking{% endblock %}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js"
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --border: #d8dee6;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --accent-dark: #1d4ed8;
+            --danger: #b91c1c;
+            --danger-bg: #fee2e2;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+        }
+        header nav {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+        header nav a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        header nav a:hover { text-decoration: underline; }
+        header .brand { font-weight: 700; margin-right: auto; }
+        main {
+            max-width: 960px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+        h2 { margin-top: 0; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        input, select, textarea {
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.25rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: #fff;
+        }
+        .controls label { margin-bottom: 0; }
+        .controls select, .controls input { width: auto; min-width: 140px; }
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 0.55rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: var(--accent);
+            color: #fff;
+        }
+        button:hover { background: var(--accent-dark); }
+        button.del {
+            background: transparent;
+            color: var(--danger);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+        }
+        button.del:hover { background: var(--danger-bg); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+        }
+        th, td {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+        th {
+            background: #f0f3f7;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--muted);
+        }
+        td.empty { text-align: center; color: var(--muted); font-style: italic; }
+        .error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.95rem;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .cards a {
+            display: block;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .cards a:hover { border-color: var(--accent); color: var(--accent); }
+        .table-wrap { overflow-x: auto; }
+        @media (max-width: 600px) {
+            .controls { flex-direction: column; align-items: stretch; }
+            .controls select, .controls input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <span class="brand">📅 Meeting Rooms</span>
+            <a href="/">Home</a>
+            <a href="/reservations/new">New Reservation</a>
+            <a href="/view">Reservations</a>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

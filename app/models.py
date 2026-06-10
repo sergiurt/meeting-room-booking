@@ -68,3 +68,19 @@ class Reservation(Base):
         Index("idx_res_date", "res_date"),
         Index("idx_res_room_date", "room_id", "res_date"),
     )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint("role IN ('admin', 'user')", name="chk_user_role"),
+    )

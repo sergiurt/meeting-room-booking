@@ -8,6 +8,9 @@ import os
 import subprocess
 
 import pytest
+from dotenv import load_dotenv
+
+load_dotenv()
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text

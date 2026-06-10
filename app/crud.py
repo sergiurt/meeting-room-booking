@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Reservation, Room
+from app.models import Reservation, Room, User
 from app.schemas import ReservationCreate
 
 
@@ -108,5 +108,56 @@ async def get_reservations(
         )
 
     stmt = stmt.order_by(Reservation.res_date, Reservation.start_time)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_user_by_username(
+    session: AsyncSession, username: str
+) -> User | None:
+    result = await session.execute(
+        select(User).where(User.username == username)
+    )
+    return result.scalar_one_or_none()
+
+
+async def create_user(
+    session: AsyncSession, username: str, password_hash: str, role: str
+) -> User:
+    user = User(username=username, password_hash=password_hash, role=role)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+async def list_users(session: AsyncSession) -> list[User]:
+    result = await session.execute(select(User).order_by(User.username))
+    return list(result.scalars().all())
+
+
+async def delete_user(session: AsyncSession, user_id: int) -> bool:
+    user = await session.get(User, user_id)
+    if user is None:
+        return False
+    await session.delete(user)
+    await session.commit()
+    return True
+
+
+async def get_reservations_for_room_week(
+    session: AsyncSession, room_id: int, week_start: datetime.date
+) -> list[Reservation]:
+    """Return one room's reservations for the 7 days starting at week_start."""
+    week_end = week_start + datetime.timedelta(days=7)
+    stmt = (
+        select(Reservation)
+        .where(
+            Reservation.room_id == room_id,
+            Reservation.res_date >= week_start,
+            Reservation.res_date < week_end,
+        )
+        .order_by(Reservation.res_date, Reservation.start_time)
+    )
     result = await session.execute(stmt)
     return list(result.scalars().all())

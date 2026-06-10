@@ -1,5 +1,6 @@
 """Pydantic v2 schemas for input validation."""
 from datetime import date, time
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -29,3 +30,9 @@ class RoomOut(BaseModel):
     room_id: int
     name: str
     capacity: int | None = None
+
+
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=1, max_length=150)
+    password: str = Field(..., min_length=6, max_length=200)
+    role: Literal["admin", "user"] = "user"

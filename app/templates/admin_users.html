@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Manage Users — Meeting Room Booking{% endblock %}
+{% block content %}
+<h2>Manage Users</h2>
+
+<div class="card" style="max-width: 420px; margin-bottom: 1.5rem;">
+    <h3>Add user</h3>
+    <form method="post" action="/admin/users">
+        <label>Username
+            <input type="text" name="username" maxlength="150" required>
+        </label>
+        <label>Password
+            <input type="password" name="password" minlength="6" required>
+        </label>
+        <label>Role
+            <select name="role">
+                <option value="user" selected>user</option>
+                <option value="admin">admin</option>
+            </select>
+        </label>
+        <button type="submit">Create user</button>
+        {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+    </form>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Username</th><th>Role</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.username }}</td>
+                <td>{{ u.role }}</td>
+                <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    {% if u.user_id != current_user.user_id %}
+                    <form method="post" action="/admin/users/{{ u.user_id }}/delete"
+                          onsubmit="return confirm('Delete user {{ u.username }}?');">
+                        <button class="del" type="submit">Delete</button>
+                    </form>
+                    {% else %}
+                    <span style="color: var(--muted);">(you)</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

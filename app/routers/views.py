@@ -11,7 +11,10 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
+from app.auth import get_current_user, require_admin, require_user
+from app.calendar_utils import DAY_NAMES, build_week_grid, generate_slots, monday_of, week_dates
 from app.database import get_session
+from app.models import User
 
 router = APIRouter(tags=["views"])
 
@@ -49,6 +52,58 @@ async def new_reservation_form(
     return templates.TemplateResponse(
         "new_reservation.html",
         {"request": request, "rooms": rooms},
+    )
+
+
+@router.get("/calendar", response_class=HTMLResponse)
+async def calendar(
+    request: Request,
+    room_id: str | None = None,
+    week: str | None = None,
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    rooms = await crud.get_rooms(session)
+
+    selected_id: int | None = None
+    if room_id and room_id.isdigit():
+        selected_id = int(room_id)
+    elif rooms:
+        selected_id = rooms[0].room_id
+
+    try:
+        base_day = datetime.date.fromisoformat(week) if week else datetime.date.today()
+    except ValueError:
+        base_day = datetime.date.today()
+
+    dates = week_dates(base_day)
+    slots = generate_slots()
+
+    reservations = []
+    if selected_id is not None:
+        reservations = await crud.get_reservations_for_room_week(
+            session, selected_id, dates[0]
+        )
+
+    grid = build_week_grid(reservations, dates, slots)
+
+    return templates.TemplateResponse(
+        "calendar.html",
+        {
+            "request": request,
+            "current_user": user,
+            "is_admin": user.role == "admin",
+            "rooms": rooms,
+            "selected_id": selected_id,
+            "dates": dates,
+            "day_names": DAY_NAMES,
+            "grid": grid,
+            "week_start": dates[0],
+            "prev_week": (dates[0] - datetime.timedelta(days=7)).isoformat(),
+            "next_week": (dates[0] + datetime.timedelta(days=7)).isoformat(),
+            "today": datetime.date.today(),
+            "full": not _is_htmx(request),
+        },
     )
 
 

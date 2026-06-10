@@ -1,0 +1,73 @@
+{% if full %}{% extends "base.html" %}{% endif %}
+{% block title %}Calendar — Meeting Room Booking{% endblock %}
+{% block content %}
+{% if full %}
+<h2>Room Availability</h2>
+<div class="controls">
+    <label>Room
+        <select name="room_id"
+                hx-get="/calendar"
+                hx-target="#calendar-grid"
+                hx-swap="innerHTML"
+                hx-trigger="change"
+                hx-include="[name='week']">
+            {% for room in rooms %}
+            <option value="{{ room.room_id }}"
+                    {% if room.room_id == selected_id %}selected{% endif %}>
+                {{ room.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </label>
+    <input type="hidden" name="week" value="{{ week_start.isoformat() }}">
+    <span>
+        <a href="/calendar?room_id={{ selected_id }}&week={{ prev_week }}">&larr; Prev week</a>
+        &nbsp;|&nbsp;
+        <strong>Week of {{ week_start.strftime('%Y-%m-%d') }}</strong>
+        &nbsp;|&nbsp;
+        <a href="/calendar?room_id={{ selected_id }}&week={{ next_week }}">Next week &rarr;</a>
+    </span>
+</div>
+<div id="calendar-grid">
+{% endif %}
+    <div class="table-wrap">
+        <table class="calendar">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    {% for d in dates %}
+                    <th {% if d == today %}class="today"{% endif %}>
+                        {{ day_names[loop.index0] }}<br>
+                        <span class="date">{{ d.strftime('%m-%d') }}</span>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for slot_start, slot_end, cells in grid %}
+                <tr>
+                    <td class="time">{{ slot_start.strftime('%H:%M') }}</td>
+                    {% for cell in cells %}
+                    {% set d = dates[loop.index0] %}
+                    {% if cell.res %}
+                    <td class="booked" title="{{ cell.res.responsible }} {{ cell.res.start_time.strftime('%H:%M') }}-{{ cell.res.end_time.strftime('%H:%M') }}">
+                        {% if cell.is_start %}{{ cell.res.responsible }}{% endif %}
+                    </td>
+                    {% elif is_admin %}
+                    <td class="free">
+                        <a class="book"
+                           href="/reservations/new?room_id={{ selected_id }}&res_date={{ d.isoformat() }}&start_time={{ slot_start.strftime('%H:%M') }}&end_time={{ slot_end.strftime('%H:%M') }}">+</a>
+                    </td>
+                    {% else %}
+                    <td class="free"></td>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% if full %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,15 +1,6 @@
 # tests/test_admin.py
 import pytest
 
-from tests.conftest import TEST_ADMIN_PASSWORD, TEST_ADMIN_USERNAME
-
-
-async def _login_as_admin(client):
-    await client.post(
-        "/login",
-        data={"username": TEST_ADMIN_USERNAME, "password": TEST_ADMIN_PASSWORD},
-    )
-
 
 @pytest.mark.asyncio
 async def test_admin_can_create_user(admin_client):

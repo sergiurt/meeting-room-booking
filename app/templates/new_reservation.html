@@ -9,18 +9,21 @@
         <label>Room
             <select name="room_id" required>
                 {% for room in rooms %}
-                <option value="{{ room.room_id }}">{{ room.name }}</option>
+                <option value="{{ room.room_id }}"
+                        {% if room.room_id == prefill_room_id %}selected{% endif %}>
+                    {{ room.name }}
+                </option>
                 {% endfor %}
             </select>
         </label>
         <label>Date
-            <input type="date" name="res_date" required>
+            <input type="date" name="res_date" value="{{ prefill_date }}" required>
         </label>
         <label>Start time
-            <input type="time" name="start_time" required>
+            <input type="time" name="start_time" value="{{ prefill_start }}" required>
         </label>
         <label>End time
-            <input type="time" name="end_time" required>
+            <input type="time" name="end_time" value="{{ prefill_end }}" required>
         </label>
         <label>Responsible
             <input type="text" name="responsible" maxlength="150"

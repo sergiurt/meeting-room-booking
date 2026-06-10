@@ -152,15 +152,43 @@
             .controls { flex-direction: column; align-items: stretch; }
             .controls select, .controls input { width: 100%; }
         }
+        table.calendar td, table.calendar th { text-align: center; min-width: 70px; }
+        table.calendar td.time { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+        table.calendar td.booked {
+            background: #fca5a5;
+            color: #7f1d1d;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        table.calendar td.free { background: #dcfce7; }
+        table.calendar td.free a.book {
+            display: block;
+            color: #15803d;
+            text-decoration: none;
+            font-weight: 700;
+            opacity: 0;
+        }
+        table.calendar td.free:hover a.book { opacity: 1; }
+        table.calendar th.today { background: #dbeafe; }
+        table.calendar th .date { font-weight: 400; color: var(--muted); font-size: 0.75rem; }
     </style>
 </head>
 <body>
     <header>
         <nav>
             <span class="brand">📅 Meeting Rooms</span>
-            <a href="/">Home</a>
-            <a href="/reservations/new">New Reservation</a>
+            {% if current_user %}
+            <a href="/calendar">Calendar</a>
             <a href="/view">Reservations</a>
+            {% if current_user.role == 'admin' %}
+            <a href="/reservations/new">New Reservation</a>
+            <a href="/admin/users">Manage Users</a>
+            {% endif %}
+            <span style="margin-left:auto; color: var(--muted);">{{ current_user.username }} ({{ current_user.role }})</span>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit" style="background:transparent; color:var(--accent); padding:0; font-weight:600;">Logout</button>
+            </form>
+            {% endif %}
         </nav>
     </header>
     <main>

@@ -1,8 +1,8 @@
 # Meeting Room Booking
 
-A single-user internal meeting room booking tool. Reserve one of three rooms,
-prevent overlapping bookings at the database level, and browse reservations by
-room or by month.
+A role-based internal meeting room booking tool. Admins reserve rooms and manage
+users; all authenticated users can browse the weekly calendar and reservation list.
+Overlapping bookings are prevented at the database level.
 
 Built with FastAPI, async SQLAlchemy 2, Alembic, Jinja2 + HTMX, and PostgreSQL.
 
@@ -40,11 +40,24 @@ cp .env.example .env
 
 `.env` keys:
 
-| Key            | Description                                              |
-| -------------- | -------------------------------------------------------- |
-| `DATABASE_URL` | Async SQLAlchemy URL, e.g. `postgresql+asyncpg://user:pass@localhost:5432/meeting_rooms` |
-| `APP_HOST`     | Host interface for the app server (e.g. `0.0.0.0`)       |
-| `APP_PORT`     | Port for the app server (e.g. `8000`)                    |
+| Key               | Description                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| `DATABASE_URL`    | Async SQLAlchemy URL, e.g. `postgresql+asyncpg://user:pass@localhost:5432/meeting_rooms` |
+| `TEST_DATABASE_URL` | URL for the test database (used by pytest)                                             |
+| `SECRET_KEY`      | Secret key for session cookie signing                                                    |
+| `ADMIN_USERNAME`  | Username for the seeded admin account                                                    |
+| `ADMIN_PASSWORD`  | Password for the seeded admin account                                                    |
+| `APP_HOST`        | Host interface for the app server (e.g. `0.0.0.0`)                                      |
+| `APP_PORT`        | Port for the app server (e.g. `8000`)                                                    |
+
+Generate a session secret and set it in `.env`:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"   # paste as SECRET_KEY
+```
+
+Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env` **before** running migrations —
+migration `002` seeds this admin account.
 
 Make sure the target database exists before running migrations:
 
@@ -72,6 +85,17 @@ alembic downgrade base
 
 ---
 
+## Users & roles
+
+- **Admin** — can create and delete reservations and manage users (`/admin/users`).
+- **User** — can sign in and view room availability only.
+
+The first admin is seeded from `.env` by `alembic upgrade head`. Sign in at
+`/login`; the home page and all views require authentication. Admins add further
+accounts from **Manage Users**.
+
+---
+
 ## 4. Run
 
 ```bash
@@ -91,8 +115,11 @@ Open the app in your browser:
 http://localhost:8000
 ```
 
-From the landing page you can:
+The root URL redirects unauthenticated users to `/login` and authenticated users
+to `/calendar`. Key pages:
 
-- **New Reservation** — `/reservations/new`
-- **View by Room** — `/view/room`
-- **View by Month** — `/view/month`
+- **Sign in** — `/login`
+- **Weekly calendar** — `/calendar`
+- **Reservations list** — `/view`
+- **New Reservation** (admin only) — `/reservations/new`
+- **Manage Users** (admin only) — `/admin/users`

@@ -177,9 +177,18 @@
     <header>
         <nav>
             <span class="brand">📅 Meeting Rooms</span>
-            <a href="/">Home</a>
-            <a href="/reservations/new">New Reservation</a>
+            {% if current_user %}
+            <a href="/calendar">Calendar</a>
             <a href="/view">Reservations</a>
+            {% if current_user.role == 'admin' %}
+            <a href="/reservations/new">New Reservation</a>
+            <a href="/admin/users">Manage Users</a>
+            {% endif %}
+            <span style="margin-left:auto; color: var(--muted);">{{ current_user.username }} ({{ current_user.role }})</span>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit" style="background:transparent; color:var(--accent); padding:0; font-weight:600;">Logout</button>
+            </form>
+            {% endif %}
         </nav>
     </header>
     <main>

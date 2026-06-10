@@ -36,7 +36,7 @@
                     <th>Duration</th>
                     <th>Responsible</th>
                     <th>Notes</th>
-                    <th></th>
+                    {% if is_admin %}<th></th>{% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -49,6 +49,7 @@
                     <td>{{ r.duration | duration }}</td>
                     <td>{{ r.responsible }}</td>
                     <td>{{ r.notes or '' }}</td>
+                    {% if is_admin %}
                     <td>
                         <button class="del"
                                 hx-delete="/reservations/{{ r.reservation_id }}"
@@ -58,9 +59,10 @@
                             Delete
                         </button>
                     </td>
+                    {% endif %}
                 </tr>
                 {% else %}
-                <tr><td class="empty" colspan="8">No reservations match these filters.</td></tr>
+                <tr><td class="empty" colspan="{% if is_admin %}8{% else %}7{% endif %}">No reservations match these filters.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

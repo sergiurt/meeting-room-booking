@@ -6,13 +6,13 @@ fragment; normal requests receive the full page.
 import datetime
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
 from app.auth import get_current_user, require_admin, require_user
-from app.calendar_utils import DAY_NAMES, build_week_grid, generate_slots, monday_of, week_dates
+from app.calendar_utils import DAY_NAMES, build_week_grid, generate_slots, week_dates
 from app.database import get_session
 from app.models import User
 
@@ -38,20 +38,36 @@ def _is_htmx(request: Request) -> bool:
     return request.headers.get("HX-Request") is not None
 
 
-@router.get("/", response_class=HTMLResponse)
-async def index(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse("index.html", {"request": request})
+@router.get("/")
+async def index(user: User | None = Depends(get_current_user)):
+    if user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    return RedirectResponse(url="/calendar", status_code=303)
 
 
 @router.get("/reservations/new", response_class=HTMLResponse)
 async def new_reservation_form(
     request: Request,
+    room_id: str | None = None,
+    res_date: str | None = None,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    admin: User = Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ) -> HTMLResponse:
     rooms = await crud.get_rooms(session)
+    prefill_room_id = int(room_id) if room_id and room_id.isdigit() else None
     return templates.TemplateResponse(
         "new_reservation.html",
-        {"request": request, "rooms": rooms},
+        {
+            "request": request,
+            "current_user": admin,
+            "rooms": rooms,
+            "prefill_room_id": prefill_room_id,
+            "prefill_date": res_date or "",
+            "prefill_start": start_time or "",
+            "prefill_end": end_time or "",
+        },
     )
 
 
@@ -112,6 +128,7 @@ async def view_reservations(
     request: Request,
     room_id: str | None = None,
     period: str | None = None,
+    user: User = Depends(require_user),
     session: AsyncSession = Depends(get_session),
 ) -> HTMLResponse:
     """Unified reservations list.
@@ -147,6 +164,8 @@ async def view_reservations(
         "view_reservations.html",
         {
             "request": request,
+            "current_user": user,
+            "is_admin": user.role == "admin",
             "rooms": rooms,
             "room_id": selected_room_id,
             "period": period or "",

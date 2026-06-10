@@ -7,7 +7,9 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
+from app.auth import require_admin
 from app.database import get_session
+from app.models import User
 from app.schemas import ReservationCreate
 
 router = APIRouter(prefix="/reservations", tags=["reservations"])
@@ -26,6 +28,7 @@ async def create_reservation(
     start_time: str = Form(...),
     end_time: str = Form(...),
     notes: str | None = Form(None),
+    admin: User = Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ) -> Response:
     """Validate and insert a reservation.
@@ -60,6 +63,7 @@ async def create_reservation(
 @router.delete("/{reservation_id}", response_class=HTMLResponse)
 async def delete_reservation(
     reservation_id: int,
+    admin: User = Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ) -> HTMLResponse:
     """Delete a reservation. Returns an empty body so HTMX removes the row."""

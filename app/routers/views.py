@@ -71,14 +71,14 @@ async def new_reservation_form(
     )
 
 
-@router.get("/calendar", response_class=HTMLResponse)
-async def calendar(
+async def _render_calendar(
     request: Request,
-    room_id: str | None = None,
-    week: str | None = None,
-    user: User = Depends(require_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession,
+    user: User,
+    room_id: str | None,
+    week: str | None,
 ) -> HTMLResponse:
+    """Build the calendar context and render it (full page or HTMX partial)."""
     rooms = await crud.get_rooms(session)
 
     selected_id: int | None = None
@@ -123,53 +123,58 @@ async def calendar(
     )
 
 
-@router.get("/view", response_class=HTMLResponse)
-async def view_reservations(
+@router.get("/calendar", response_class=HTMLResponse)
+async def calendar(
     request: Request,
     room_id: str | None = None,
-    period: str | None = None,
+    week: str | None = None,
     user: User = Depends(require_user),
     session: AsyncSession = Depends(get_session),
 ) -> HTMLResponse:
-    """Unified reservations list.
+    return await _render_calendar(request, session, user, room_id, week)
 
-    Shows all reservations by default. Optional filters (combinable):
-    - room_id: a room id, or "" / absent for all rooms.
-    - period:  a "YYYY-MM" month (from an <input type="month">), or "" for all.
 
-    Query params arrive as strings (the HTMX selects may send empty values),
-    so they are parsed defensively here.
-    """
-    rooms = await crud.get_rooms(session)
-
-    selected_room_id: int | None = None
-    if room_id:
-        try:
-            selected_room_id = int(room_id)
-        except ValueError:
-            selected_room_id = None
-
-    year: int | None = None
-    month: int | None = None
-    if period:
-        parts = period.split("-")
-        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
-            year, month = int(parts[0]), int(parts[1])
-
-    reservations = await crud.get_reservations(
-        session, room_id=selected_room_id, year=year, month=month
-    )
-
+@router.get("/calendar/reservation/{reservation_id}", response_class=HTMLResponse)
+async def reservation_card(
+    request: Request,
+    reservation_id: int,
+    room_id: str | None = None,
+    week: str | None = None,
+    admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """Admin-only detail card for one reservation (HTMX fragment)."""
+    reservation = await crud.get_reservation(session, reservation_id)
+    if reservation is None:
+        return HTMLResponse("", status_code=200)
     return templates.TemplateResponse(
-        "view_reservations.html",
+        "reservation_card.html",
         {
             "request": request,
-            "current_user": user,
-            "is_admin": user.role == "admin",
-            "rooms": rooms,
-            "room_id": selected_room_id,
-            "period": period or "",
-            "reservations": reservations,
-            "full": not _is_htmx(request),
+            "res": reservation,
+            "room_id": room_id or "",
+            "week": week or "",
         },
     )
+
+
+@router.get("/calendar/card/close", response_class=HTMLResponse)
+async def close_reservation_card(
+    admin: User = Depends(require_admin),
+) -> HTMLResponse:
+    """Clear the detail card (admin-only HTMX fragment)."""
+    return HTMLResponse("", status_code=200)
+
+
+@router.post("/calendar/reservation/{reservation_id}/delete", response_class=HTMLResponse)
+async def delete_reservation_from_calendar(
+    request: Request,
+    reservation_id: int,
+    room_id: str | None = None,
+    week: str | None = None,
+    admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+) -> HTMLResponse:
+    """Admin-only: delete a reservation and return the refreshed calendar."""
+    await crud.delete_reservation(session, reservation_id)
+    return await _render_calendar(request, session, admin, room_id, week)

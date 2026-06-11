@@ -1,0 +1,32 @@
+<div class="modal-overlay">
+    <div class="modal-backdrop"
+         hx-get="/calendar/card/close"
+         hx-target="#reservation-detail"
+         hx-swap="innerHTML"
+         title="Close"></div>
+    <div class="modal-card card">
+        <div class="detail-head">
+            <h3>Reservation details</h3>
+            <button class="close"
+                    hx-get="/calendar/card/close"
+                    hx-target="#reservation-detail"
+                    hx-swap="innerHTML"
+                    title="Close">&times;</button>
+        </div>
+        <dl class="detail-list">
+            <dt>Room</dt><dd>{{ res.room.name }}</dd>
+            <dt>Date</dt><dd>{{ res.res_date.strftime('%A, %b %d, %Y') }}</dd>
+            <dt>Time</dt><dd>{{ res.start_time.strftime('%H:%M') }} – {{ res.end_time.strftime('%H:%M') }}</dd>
+            <dt>Duration</dt><dd>{{ res.duration | duration }}</dd>
+            <dt>Responsible</dt><dd>{{ res.responsible }}</dd>
+            <dt>Notes</dt><dd>{{ res.notes or '—' }}</dd>
+        </dl>
+        <button class="del danger"
+                hx-post="/calendar/reservation/{{ res.reservation_id }}/delete?room_id={{ room_id }}&week={{ week }}"
+                hx-target="#cal"
+                hx-swap="innerHTML"
+                hx-confirm="Delete this reservation? This cannot be undone.">
+            Delete reservation
+        </button>
+    </div>
+</div>

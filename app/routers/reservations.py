@@ -56,7 +56,9 @@ async def create_reservation(
         return HTMLResponse(_error_html(str(exc)), status_code=200)
 
     response = Response(status_code=204)
-    response.headers["HX-Redirect"] = f"/view?room_id={data.room_id}"
+    response.headers["HX-Redirect"] = (
+        f"/calendar?room_id={data.room_id}&week={data.res_date.isoformat()}"
+    )
     return response
 
 

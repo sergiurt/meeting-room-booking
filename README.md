@@ -119,7 +119,6 @@ The root URL redirects unauthenticated users to `/login` and authenticated users
 to `/calendar`. Key pages:
 
 - **Sign in** — `/login`
-- **Weekly calendar** — `/calendar`
-- **Reservations list** — `/view`
+- **Weekly calendar** — `/calendar` (admins click a booking for details + delete)
 - **New Reservation** (admin only) — `/reservations/new`
 - **Manage Users** (admin only) — `/admin/users`

@@ -1,35 +1,47 @@
 {% if full %}{% extends "base.html" %}{% endif %}
 {% block title %}Calendar — Meeting Room Booking{% endblock %}
 {% block content %}
-{% if full %}
-<h2>Room Availability</h2>
-<div class="controls">
-    <label>Room
-        <select name="room_id"
-                hx-get="/calendar"
-                hx-target="#calendar-grid"
-                hx-swap="innerHTML"
-                hx-trigger="change"
-                hx-include="[name='week']">
-            {% for room in rooms %}
-            <option value="{{ room.room_id }}"
-                    {% if room.room_id == selected_id %}selected{% endif %}>
-                {{ room.name }}
-            </option>
-            {% endfor %}
-        </select>
-    </label>
-    <input type="hidden" name="week" value="{{ week_start.isoformat() }}">
-    <span>
-        <a href="/calendar?room_id={{ selected_id }}&week={{ prev_week }}">&larr; Prev week</a>
-        &nbsp;|&nbsp;
-        <strong>Week of {{ week_start.strftime('%Y-%m-%d') }}</strong>
-        &nbsp;|&nbsp;
-        <a href="/calendar?room_id={{ selected_id }}&week={{ next_week }}">Next week &rarr;</a>
-    </span>
-</div>
-<div id="calendar-grid">
-{% endif %}
+{% if full %}<div id="cal">{% endif %}
+    <h2>Room Availability</h2>
+    <div class="controls">
+        <label>Room
+            <select name="room_id"
+                    hx-get="/calendar"
+                    hx-target="#cal"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="[name='week']"
+                    hx-push-url="true">
+                {% for room in rooms %}
+                <option value="{{ room.room_id }}"
+                        {% if room.room_id == selected_id %}selected{% endif %}>
+                    {{ room.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Jump to week
+            <input type="date" name="week" value="{{ week_start.isoformat() }}"
+                   hx-get="/calendar"
+                   hx-target="#cal"
+                   hx-swap="innerHTML"
+                   hx-trigger="change"
+                   hx-include="[name='room_id']"
+                   hx-push-url="true">
+        </label>
+        <span class="weeknav">
+            <a href="/calendar?room_id={{ selected_id }}&week={{ prev_week }}"
+               hx-get="/calendar?room_id={{ selected_id }}&week={{ prev_week }}"
+               hx-target="#cal" hx-swap="innerHTML" hx-push-url="true">&larr; Prev</a>
+            <a href="/calendar?room_id={{ selected_id }}&week={{ today.isoformat() }}"
+               hx-get="/calendar?room_id={{ selected_id }}&week={{ today.isoformat() }}"
+               hx-target="#cal" hx-swap="innerHTML" hx-push-url="true">Today</a>
+            <a href="/calendar?room_id={{ selected_id }}&week={{ next_week }}"
+               hx-get="/calendar?room_id={{ selected_id }}&week={{ next_week }}"
+               hx-target="#cal" hx-swap="innerHTML" hx-push-url="true">Next &rarr;</a>
+        </span>
+        <strong class="week-label">Week of {{ week_start.strftime('%b %d, %Y') }}</strong>
+    </div>
     <div class="table-wrap">
         <table class="calendar">
             <thead>
@@ -49,9 +61,19 @@
                     <td class="time">{{ slot_start.strftime('%H:%M') }}</td>
                     {% for cell in cells %}
                     {% set d = dates[loop.index0] %}
-                    {% if cell.res %}
-                    <td class="booked" title="{{ cell.res.responsible }} {{ cell.res.start_time.strftime('%H:%M') }}-{{ cell.res.end_time.strftime('%H:%M') }}">
-                        {% if cell.is_start %}{{ cell.res.responsible }}{% endif %}
+                    {% if cell.skip %}
+                    {# covered by a reservation block that started in an earlier slot #}
+                    {% elif cell.res %}
+                    <td class="booked{% if is_admin %} clickable{% endif %}"
+                        rowspan="{{ cell.rowspan }}"
+                        title="{{ cell.res.responsible }} {{ cell.res.start_time.strftime('%H:%M') }}-{{ cell.res.end_time.strftime('%H:%M') }}"
+                        {% if is_admin %}
+                        hx-get="/calendar/reservation/{{ cell.res.reservation_id }}?room_id={{ selected_id }}&week={{ week_start.isoformat() }}"
+                        hx-target="#reservation-detail"
+                        hx-swap="innerHTML"
+                        {% endif %}>
+                        <span class="who">{{ cell.res.responsible }}</span><br>
+                        <span class="when">{{ cell.res.start_time.strftime('%H:%M') }}–{{ cell.res.end_time.strftime('%H:%M') }}</span>
                     </td>
                     {% elif is_admin %}
                     <td class="free">
@@ -67,7 +89,6 @@
             </tbody>
         </table>
     </div>
-{% if full %}
-</div>
-{% endif %}
+    <div id="reservation-detail"></div>
+{% if full %}</div>{% endif %}
 {% endblock %}

@@ -159,7 +159,9 @@
             color: #7f1d1d;
             font-size: 0.75rem;
             font-weight: 600;
+            vertical-align: top;
         }
+        table.calendar td.booked .when { font-weight: 400; opacity: 0.85; }
         table.calendar td.free { background: #dcfce7; }
         table.calendar td.free a.book {
             display: block;
@@ -171,6 +173,44 @@
         table.calendar td.free:hover a.book { opacity: 1; }
         table.calendar th.today { background: #dbeafe; }
         table.calendar th .date { font-weight: 400; color: var(--muted); font-size: 0.75rem; }
+        .weeknav { display: inline-flex; gap: 0.4rem; align-items: center; }
+        .weeknav a {
+            display: inline-block;
+            padding: 0.4rem 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--card);
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .weeknav a:hover { border-color: var(--accent); text-decoration: none; }
+        .week-label { align-self: center; color: var(--muted); }
+        table.calendar td.booked.clickable { cursor: pointer; }
+        table.calendar td.booked.clickable:hover { background: #f87171; }
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .modal-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.5); cursor: pointer; }
+        .modal-card {
+            position: relative; z-index: 1;
+            max-width: 440px; width: 100%;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        .detail-head { display: flex; align-items: center; justify-content: space-between; }
+        .detail-head h3 { margin: 0; }
+        .detail-head .close {
+            background: transparent; color: var(--muted); border: none;
+            font-size: 1.4rem; line-height: 1; padding: 0 0.25rem; cursor: pointer;
+        }
+        .detail-list { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 1rem; margin: 1rem 0; }
+        .detail-list dt { font-weight: 600; color: var(--muted); }
+        .detail-list dd { margin: 0; }
+        button.danger { background: var(--danger); color: #fff; }
+        button.danger:hover { background: #991b1b; }
     </style>
 </head>
 <body>
@@ -179,7 +219,6 @@
             <span class="brand">📅 Meeting Rooms</span>
             {% if current_user %}
             <a href="/calendar">Calendar</a>
-            <a href="/view">Reservations</a>
             {% if current_user.role == 'admin' %}
             <a href="/reservations/new">New Reservation</a>
             <a href="/admin/users">Manage Users</a>

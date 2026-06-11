@@ -73,45 +73,6 @@ async def delete_reservation(session: AsyncSession, reservation_id: int) -> bool
     return True
 
 
-async def get_reservations(
-    session: AsyncSession,
-    *,
-    room_id: int | None = None,
-    year: int | None = None,
-    month: int | None = None,
-) -> list[Reservation]:
-    """Return reservations, optionally filtered by room and/or by month.
-
-    - No filters -> all reservations across all rooms.
-    - room_id only -> all reservations for that room.
-    - year + month -> all reservations in that calendar month.
-    - both -> that room within that month.
-
-    Sorted by date then start_time ascending. The related room is eager-loaded
-    so the room name is available without lazy loading.
-    """
-    stmt = select(Reservation).options(selectinload(Reservation.room))
-
-    if room_id is not None:
-        stmt = stmt.where(Reservation.room_id == room_id)
-
-    if year is not None and month is not None:
-        start = datetime.date(year, month, 1)
-        end = (
-            datetime.date(year + 1, 1, 1)
-            if month == 12
-            else datetime.date(year, month + 1, 1)
-        )
-        stmt = stmt.where(
-            Reservation.res_date >= start,
-            Reservation.res_date < end,
-        )
-
-    stmt = stmt.order_by(Reservation.res_date, Reservation.start_time)
-    result = await session.execute(stmt)
-    return list(result.scalars().all())
-
-
 async def get_user_by_username(
     session: AsyncSession, username: str
 ) -> User | None:
@@ -143,6 +104,19 @@ async def delete_user(session: AsyncSession, user_id: int) -> bool:
     await session.delete(user)
     await session.commit()
     return True
+
+
+async def get_reservation(
+    session: AsyncSession, reservation_id: int
+) -> Reservation | None:
+    """Return a single reservation by id, with its room eager-loaded."""
+    stmt = (
+        select(Reservation)
+        .where(Reservation.reservation_id == reservation_id)
+        .options(selectinload(Reservation.room))
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
 
 
 async def get_reservations_for_room_week(

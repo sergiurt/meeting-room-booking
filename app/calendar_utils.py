@@ -46,27 +46,55 @@ def reservation_covers_slot(
 def build_week_grid(reservations, dates, slots):
     """Build rows of (slot_start, slot_end, cells).
 
-    Each cell is {"res": reservation_or_None, "is_start": bool}. is_start marks
-    the slot where the reservation begins (used to print the label once).
+    Each cell is a dict:
+      - "res":      the covering reservation, or None if the slot is free.
+      - "is_start": True on the first covered slot of a reservation (where the
+                    single merged block is rendered).
+      - "skip":     True for later slots covered by a reservation whose block
+                    started above (the template renders no <td> for these,
+                    because the start cell spans them via rowspan).
+      - "rowspan":  on a start cell, how many slots the block spans (>=1).
+
+    Each reservation therefore renders as ONE clickable cell spanning its whole
+    duration, rather than one cell per 30-minute slot.
     """
     by_date: dict[datetime.date, list] = {d: [] for d in dates}
     for r in reservations:
         if r.res_date in by_date:
             by_date[r.res_date].append(r)
 
+    n = len(slots)
+    # For each day, map slot index -> the reservation covering it (or None).
+    covering: dict[datetime.date, list] = {d: [None] * n for d in dates}
+    for d in dates:
+        for r in by_date[d]:
+            for i, (slot_start, slot_end) in enumerate(slots):
+                if reservation_covers_slot(r, slot_start, slot_end):
+                    covering[d][i] = r
+
     grid = []
-    for slot_start, slot_end in slots:
+    for i, (slot_start, slot_end) in enumerate(slots):
         cells = []
         for d in dates:
-            booked = next(
-                (
-                    r
-                    for r in by_date[d]
-                    if reservation_covers_slot(r, slot_start, slot_end)
-                ),
-                None,
-            )
-            is_start = bool(booked and slot_start <= booked.start_time < slot_end)
-            cells.append({"res": booked, "is_start": is_start})
+            res = covering[d][i]
+            if res is None:
+                cells.append(
+                    {"res": None, "is_start": False, "skip": False, "rowspan": 1}
+                )
+                continue
+            is_first = i == 0 or covering[d][i - 1] is not res
+            if is_first:
+                span = 0
+                j = i
+                while j < n and covering[d][j] is res:
+                    span += 1
+                    j += 1
+                cells.append(
+                    {"res": res, "is_start": True, "skip": False, "rowspan": span}
+                )
+            else:
+                cells.append(
+                    {"res": res, "is_start": False, "skip": True, "rowspan": 0}
+                )
         grid.append((slot_start, slot_end, cells))
     return grid

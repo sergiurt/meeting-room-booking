@@ -30,7 +30,7 @@ async def test_admin_can_create_reservation(admin_client):
         follow_redirects=False,
     )
     assert resp.status_code == 204
-    assert resp.headers["hx-redirect"] == "/view?room_id=1"
+    assert resp.headers["hx-redirect"] == "/calendar?room_id=1&week=2026-06-15"
 
 
 @pytest.mark.asyncio
